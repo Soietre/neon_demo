@@ -1,0 +1,16 @@
+Buffer<uint16_t> extractNEON(Buffer<uint16_t> in) {
+    Buffer<uint16_t> out(in.width()/DIV4, in.height()/DIV4);
+
+    t = benchmark(10, 1, [&]() {
+        for (int x = 0; x < in.width()/DIV4; x += 4) {
+            for(int y = 0; y < in.height()/DIV4; y += 8) {
+                uint16_t *outPtr = &(out(x, y));
+                uint16_t *inPtr = &(in(x*4, y*4));
+                uint16x8x4_t intlv_rgba;
+                intlv_rgba = vld4q_u16(inPtr);
+                vst1q_u16(outPtr, intlv_rgba.val[0]);
+            }   
+        }   
+     }); 
+    return out;
+}
