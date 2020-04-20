@@ -1,0 +1,39 @@
+#!/bin/bash
+
+basedir=`dirname $0`
+cd $basedir
+. ../setup-env.sh
+declare -i result=0
+set -x
+
+INCLUDES="-I $HALIDE_ROOT/include -I $HALIDE_ROOT/support"
+HL_LIBS="$HALIDE_ROOT/lib/libHalide.a"
+
+#############################################################################
+cat <<EOT
+=== Build Android ARM-64/Hexagon executable for device ===
+EOT
+
+rm -fr ./bincppblock
+mkdir -p bincppblock/arm-64-android
+
+$ANDROID_ARM64_TOOLCHAIN/bin/aarch64-linux-android-c++ -std=c++11 -fopenmp $INCLUDES -I ./bincppblock/arm-64-android -Wall -O3 cppblock.cpp $HL_LIBS  -o bincppblock/arm-64-android/test -llog -fPIE -pie
+if [ "z$RUNDROID" = "z" ]; then
+    set +x
+    export PREF=echo
+    export STR="To run this example on an Android device, do:"
+else
+    echo "Running tests on Device:$ANDROID_SERIAL"
+    set +x
+fi
+$PREF $STR
+$PREF    adb push bin/arm-64-android/test /data/
+$PREF    adb shell chmod +x /data/test
+$PREF    adb shell /data/test 10
+$PREF
+
+
+
+result=$?
+
+exit $result
